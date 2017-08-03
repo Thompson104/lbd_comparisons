@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+# code: utf-8 -*-
+# author: hwang
+# created on: 05/31/2017
+# modified on:
+import rosbag 
+import rospy
+from sensor_msgs.msg import JointState
+from datetime import datetime
+BAG_DIR = "/home/hwang/log_files/kinematics_demo/bag_files/" + datetime.now()
+
+"""
+This module helps communicate with the UR robot via xmlrpc. The class is designed to contain all the remote procedure
+calls (prefixed by rpc) and helper functions for the server side. The server runs here and the client runs on the UR
+robot. The UR continuously updates it's controller parameters through these rpc calls. The rpc server runs in a
+seperate thread. Once the main thread is complete the server thread exits.
+"""
+class RosBagLogger():
+    
+    def callback_ur5(data):
+        '''log robot joint states into rosbag file'''
+        rcom_inst.pose_state = list(data.position)
+
+    def callback_gripper(data):
+        '''log gripper joint states into rosbag file'''
+        ready_to_write_tmp = list(data.position)
+        
+
+    def listen():
+        """listen the joint state from /joint state topic"""
+        rospy.init_node('robot_sensing_listener', anonymous=True)
+        rospy.Subscriber("ur5/joint_states", JointState, callback_ur5)
+        rospy.Subscriber("gripper/joint_states", JointState, callback_gripper)
+        rospy.spin()
+
+
+if __name__ == "__main__":
+    try:
+        listen()
+    except rospy.ROSInterruptException:
+        pass

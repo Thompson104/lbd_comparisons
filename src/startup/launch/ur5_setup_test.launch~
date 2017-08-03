@@ -1,0 +1,42 @@
+<launch>
+    <!-- UR5 stuff -->
+<group ns = "/ur5">
+  <arg name="limited" default="false"/>
+  
+  <param unless="$(arg limited)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find ur_description)/urdf/ur5_robot.urdf.xacro'" />
+  <param if="$(arg limited)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find ur_description)/urdf/ur5_joint_limited_robot.urdf.xacro'" />
+</group>
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
+      <remap from="robot_description" to="ur5/robot_description" />
+      <remap from="joint_states" to="ur5/joint_states" />
+	<param name="tf_prefix" value="/ur5"/>
+    </node>
+
+    <node pkg="tf" type="static_transform_publisher" name="ftsensor_mnt" args="0 0 0 1 0 0 0 ur5/tool0 gripper/world 100" />
+
+    <node pkg="robot_sensing" type="robot_data_reader.py" name = "ur5_data_reader"/>
+
+    <node pkg="rviz" type="rviz"  name="rviz" args="-d $(find startup)/rviz/robotiq_ur5.rviz" />
+
+  <!-- Pass in mocap_config_file:=/path/to/config.yaml to change options. -->
+  <arg name="mocap_config_file"
+       default="$(find mocap_optitrack)/config/mocap.yaml" />
+  <node pkg="mocap_optitrack"
+        type="mocap_node"
+        name="mocap_node"
+        respawn="false"
+        launch-prefix=""
+        required="true">
+    <rosparam file="$(arg mocap_config_file)" command="load" />
+  </node>
+  <!-- Transformation between moCap coordinate frame to robot coordinate frame -->
+  <!--node pkg="tf" type="static_transform_publisher" name="calibration_broadcaster" args="-0.31171927 -0.49863997 -0.15600724 0.01336381  0.00851019 -0.99930527 0.03373366 ur5/world world 100" /-->
+  <node pkg="tf" type="static_transform_publisher" name="calibration_broadcaster" args="-0.48415783 -0.591212 -0.14208678 -0.01172668  0.00329632  0.9999224 0.00261128 ur5/world world 100" />
+
+  <node
+    name="tongs_grasp_publisher"
+    pkg="tongs_v2"
+    type="tongs_grasp_publisher.py"
+    />
+</launch>
